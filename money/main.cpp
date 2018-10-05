@@ -32,15 +32,19 @@ bool prodsort(const producer &p1,
   return (p1.from < p2.from);
 }
 
+typedef std::vector<std::pair<producer, consumer>> prodcons;
+
 int main(int argc, char **argv) {
   int64_t np, nc;
   std::cin >> np >> nc;
 
   std::vector<producer> ps;
-  std::vector<consumer> cs;
+
+  prodcons potentials;
+  std::pair<producer, consumer> bestpair;
+  int64_t bestscore;
 
   ps.reserve(np);
-  cs.reserve(nc);
 
   for (int64_t i = 0; i < np; ++i) {
     producer p;
@@ -52,30 +56,23 @@ int main(int argc, char **argv) {
   int64_t minprodday = ps.begin()->from;
   int64_t maxprodday = (ps.end() - 1)->from;
 
+  bestscore = 0;
   for (int64_t i = 0; i < nc; ++i) {
     consumer c;
     std::cin >> c.price >> c.to;
-    // if (maxprodday >= (c.to - 1))
-    cs.push_back(c);
-  }
-  std::sort(cs.begin(), cs.end(), conssort); // s ==> l
-  int64_t minconsday = cs.begin()->to - 1;
-  int64_t maxconsday = (cs.end() - 1)->to - 1;
 
-  int64_t maxprofit = 0;
-  for (auto cons : cs) {      // first the smallest consumers
-    if (cons.to < minprodday) // no producer available
-      break;
-    for (auto prod : ps) {       // first the latest producers
-      if (prod.from < cons.to) { // production starts on time
-        int64_t profit = prod.get_profit(cons);
-        if (profit > maxprofit)
-          maxprofit = profit;
-      } else
+    for (auto p : ps) {
+      if (p.from >= c.to)
         break;
+      int64_t score = p.get_profit(c);
+      if (score > bestscore) { // potential
+        bestpair.first = p;
+        bestpair.second = c;
+        bestscore = score;
+      }
     }
   }
 
-  std::cout << maxprofit;
+  std::cout << bestscore;
   return 0;
 }
